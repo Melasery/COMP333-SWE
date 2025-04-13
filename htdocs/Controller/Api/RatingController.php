@@ -9,11 +9,15 @@ class RatingController extends BaseController
         $strErrorDesc = '';
         $requestMethod = $_SERVER["REQUEST_METHOD"];
         $requestData = $this->getRequestData();
-
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
         if (strtoupper($requestMethod) == 'POST') {
             try {
                 $ratingModel = new RatingModel();
-                
+    
                 // Validate input
                 if (empty($requestData['username'])) {
                     throw new Exception("Username is required");
@@ -30,15 +34,20 @@ class RatingController extends BaseController
                 if ($requestData['rating'] < 0 || $requestData['rating'] > 9) {
                     throw new Exception("Rating must be between 0-9");
                 }
-
-                // Create rating
-                $ratingId = $ratingModel->createRating(
-                    $requestData['username'],
-                    $requestData['song'],
-                    $requestData['artist'],
-                    $requestData['rating']
-                );
-
+    
+                // Try to create rating and catch DB-related errors
+                try {
+                    $ratingId = $ratingModel->createRating(
+                        $requestData['username'],
+                        $requestData['song'],
+                        $requestData['artist'],
+                        $requestData['rating']
+                    );
+                } catch (Exception $e) {
+                    error_log("createRating error: " . $e->getMessage());
+                    throw new Exception("Failed to insert rating: " . $e->getMessage());
+                }
+    
                 $responseData = json_encode([
                     'message' => 'Rating created successfully',
                     'rating_id' => $ratingId
@@ -51,7 +60,7 @@ class RatingController extends BaseController
             $strErrorDesc = 'Method not supported';
             $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
         }
-
+    
         if (!$strErrorDesc) {
             $this->sendOutput(
                 $responseData,
@@ -64,7 +73,7 @@ class RatingController extends BaseController
             );
         }
     }
-
+    
     /**
      * "/rating/list" Endpoint - Get all ratings
      */
