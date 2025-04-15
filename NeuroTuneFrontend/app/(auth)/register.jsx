@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text, Alert } from "react-native";
 import BASE_URL from "../../constants/api";
+import { useAuth } from "../../context/AuthContext";
+
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm_password, setConfirmedPassword] = useState("");
+  const { login } = useAuth(); // Get the login function from context
+  
 
   const handleRegister = async () => {
     // Validation
@@ -21,10 +25,13 @@ export default function RegisterScreen() {
 
     try {
       // Send registration request
-      const response = await fetch(`${BASE_URL}/user/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, confirm_password}), // Include confirmed_password
+      const response = await fetch(`http://172.21.220.168:8080/index.php/user/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          "username" : username, 
+          "password" : password, 
+          "confirm_password" : confirm_password}), // Include confirmed_password
       });
 
       console.log("Response Status:", response.status); // Debugging log
@@ -42,6 +49,8 @@ export default function RegisterScreen() {
       if (isJson) {
         if (text.message === "User registered successfully") {
           Alert.alert("Success", "User registered!");
+          login({ username, message: text.message }); // Save user data in context (no token available in response)
+
           console.log(text);
         } else {
           Alert.alert("Registration Failed", text.message || "Please try again.");
@@ -53,6 +62,18 @@ export default function RegisterScreen() {
       console.error("Register error:", err);
       Alert.alert("Error", "Failed to register.");
     }
+
+    /*fetch(`http://172.21.220.168:8080/index.php/user/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "username": username,
+        "password": password,
+        "confirm_password": confirm_password,
+      })
+    }).then(res => {console.log("Result: " + res)}).catch(err => console.log("Error: " + err))*/
   };
 
   return (
@@ -61,20 +82,20 @@ export default function RegisterScreen() {
       <TextInput
         placeholder="Username"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={text => setUsername(text)}
         style={styles.input}
       />
       <TextInput
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={text => setPassword(text)}
         secureTextEntry
         style={styles.input}
       />
       <TextInput
         placeholder="Confirm Password"
         value={confirm_password}
-        onChangeText={setConfirmedPassword}
+        onChangeText={text => setConfirmedPassword(text)}
         secureTextEntry
         style={styles.input}
       />
