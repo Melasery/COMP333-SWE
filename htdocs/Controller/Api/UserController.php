@@ -13,29 +13,36 @@ class UserController extends BaseController
         if (strtoupper($requestMethod) == 'POST') {
             try {
                 $userModel = new UserModel();
-                
+                $existingUser = $userModel->getUserByUsername($requestData['username']);
                 // Validate input
                 if (empty($requestData['username'])) {
-                    throw new Exception("Username is required");
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]);
                 }
-                if (empty($requestData['password'])) {
-                    throw new Exception("Password is required");
+                else if (empty($requestData['password'])) {
+                    $responseData = json_encode([
+                        'message' => 'Password is required'
+                    ]);
                 }
-                if ($requestData['password'] !== $requestData['confirm_password']) {
-                    throw new Exception("Passwords do not match");
-                }
-                if (strlen($requestData['password']) < 10) {
-                    throw new Exception("Password must be at least 10 characters");
+                else if ($requestData['password'] !== $requestData['confirm_password']) {
+                    $responseData = json_encode([
+                        'message' => 'Passwords do not match'
+                    ]);                }
+                else if (strlen($requestData['password']) < 10) {
+                    $responseData = json_encode([
+                        'message' => 'Password is less than 10 characters'
+                    ]);
                 }
 
                 // Check if username exists
-                $existingUser = $userModel->getUserByUsername($requestData['username']);
-                if (!empty($existingUser)) {
-                    throw new Exception("Username already taken");
-                }
+                else if (!empty($existingUser)) {
+                    $responseData = json_encode([
+                        'message' => 'Username is already taken'
+                    ]);                }
 
                 // Create user
-                $userId = $userModel->createUser(
+                else {$userId = $userModel->createUser(
                     $requestData['username'],
                     $requestData['password']
                 );
@@ -45,6 +52,7 @@ class UserController extends BaseController
                     'user_id' => $userId,
                     'username' => $requestData['username']
                 ]);
+                }
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
                 $strErrorHeader = 'HTTP/1.1 400 Bad Request';
