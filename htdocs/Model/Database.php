@@ -44,7 +44,7 @@ class Database
                 
                 foreach($params as $param) {
                     $paramTypes .= $param['type'];
-                    $paramValues[] = $param['value'];
+                    $paramValues[] = &$param['value'];
                 }
                 
                 array_unshift($paramValues, $paramTypes);
