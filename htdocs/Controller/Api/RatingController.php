@@ -20,20 +20,31 @@ class RatingController extends BaseController
     
                 // Validate input
                 if (empty($requestData['username'])) {
-                    throw new Exception("Username is required");
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]);                
                 }
-                if (empty($requestData['song'])) {
-                    throw new Exception("Song title is required");
+                else if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song title is required'
+                    ]);                 
                 }
-                if (empty($requestData['artist'])) {
-                    throw new Exception("Artist name is required");
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist name is required'
+                    ]);                 
                 }
-                if (!isset($requestData['rating']) || !is_numeric($requestData['rating'])) {
-                    throw new Exception("Rating must be a number");
+                else if (!isset($requestData['rating']) || !is_numeric($requestData['rating'])) {
+                    $responseData = json_encode([
+                        'message' => 'Rating must be a number'
+                    ]);                 
                 }
-                if ($requestData['rating'] < 0 || $requestData['rating'] > 9) {
-                    throw new Exception("Rating must be between 0-9");
+                else if ($requestData['rating'] < 0 || $requestData['rating'] > 9) {
+                    $responseData = json_encode([
+                        'message' => 'Rating must be from 0-9'
+                    ]);                 
                 }
+                else{
     
                 // Try to create rating and catch DB-related errors
                 try {
@@ -52,6 +63,7 @@ class RatingController extends BaseController
                     'message' => 'Rating created successfully',
                     'rating_id' => $ratingId
                 ]);
+                }
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
                 $strErrorHeader = 'HTTP/1.1 400 Bad Request';
