@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text } from "react-native";
-import BASE_URL from "../constants/api";
+
 
 export default function CreateScreen() {
   const [username, setUsername] = useState("");
@@ -10,7 +10,7 @@ export default function CreateScreen() {
 
   const createRating = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/rating/create`, {
+      const response = await fetch(`http://172.21.220.168:8080/index.php/rating/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, song, artist, rating: parseInt(rating) }),

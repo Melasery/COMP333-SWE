@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text, Alert } from "react-native";
-import BASE_URL from "../constants/api";
 
 export default function DeleteScreen() {
   const [id, setId] = useState("");
@@ -8,7 +7,7 @@ export default function DeleteScreen() {
 
   const deleteRating = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/rating/delete?id=${id}`, {
+      const res = await fetch(`http://172.21.220.168:8080/index.php/rating/delete?id=${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Text, Alert } from "react-native";
-import BASE_URL from "../constants/api";
 
 export default function UpdateScreen() {
   const [id, setId] = useState("");
@@ -11,7 +10,7 @@ export default function UpdateScreen() {
 
   const fetchRatingById = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/rating/get?id=${id}`);
+      const res = await fetch(`http://172.21.220.168:8080/index.php/rating/get?id=${id}`);
       const data = await res.json();
       setUsername(data.username);
       setSong(data.song);

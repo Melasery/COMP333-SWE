@@ -19,12 +19,15 @@ export default function RegisterScreen() {
       return;
     }
 
-    try {
+   /* try {
       // Send registration request
-      const response = await fetch(`${BASE_URL}/user/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, confirm_password}), // Include confirmed_password
+      const response = await fetch(`http://172.21.220.168:8080/index.php/user/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          "username" : "TTTTTNRTN33333", 
+          "password" : "strongpassword123", 
+          "confirm_password" : "strongpassword123"}), // Include confirmed_password
       });
 
       console.log("Response Status:", response.status); // Debugging log
@@ -52,7 +55,19 @@ export default function RegisterScreen() {
     } catch (err) {
       console.error("Register error:", err);
       Alert.alert("Error", "Failed to register.");
-    }
+    }*/
+
+    fetch(`http://172.21.220.168:8080/index.php/user/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "username": username,
+        "password": password,
+        "confirm_password": confirm_password,
+      })
+    }).then(res => {console.log("Result: " + res)}).catch(err => console.log("Error: " + err))
   };
 
   return (
@@ -61,21 +76,21 @@ export default function RegisterScreen() {
       <TextInput
         placeholder="Username"
         value={username}
-        onChangeText={setUsername}
+        onChangeText={text => setUsername(text)}
         style={styles.input}
       />
       <TextInput
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
-        secureTextEntry
+        onChangeText={text => setPassword(text)}
+        
         style={styles.input}
       />
       <TextInput
         placeholder="Confirm Password"
         value={confirm_password}
-        onChangeText={setConfirmedPassword}
-        secureTextEntry
+        onChangeText={text => setConfirmedPassword(text)}
+        
         style={styles.input}
       />
       <Button title="Register" onPress={handleRegister} />
