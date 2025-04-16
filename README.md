@@ -247,5 +247,6 @@ POST:
 <img width="1161" alt="Screenshot 2025-04-11 at 4 05 16 PM" src="https://github.com/user-attachments/assets/ee33702a-b3eb-43ae-ac8e-5f172701cf73" />
 
 ### Felix:
-
+<img src=assets/images/Postman-post.png />
+<img src=assets/images/Postman-get.png />
 
