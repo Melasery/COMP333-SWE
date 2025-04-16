@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
-import BASE_URL from "../constants/api";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Button } from "react-native";
+import BASE_URL from "../../constants/api"; 
 
 export default function ListScreen() {
   const [ratings, setRatings] = useState([]);
@@ -8,6 +8,8 @@ export default function ListScreen() {
 
   const fetchRatings = async () => {
     try {
+      //Gets a list of everyone's ratings, not just the user's.
+      //This page is just for viewing all ratings.
       const response = await fetch(`${BASE_URL}/rating/list`);
       const data = await response.json();
       setRatings(data);
@@ -43,6 +45,7 @@ export default function ListScreen() {
           renderItem={renderItem}
         />
       )}
+      <Button title = "refresh list" onPress = {() => {setLoading(true);fetchRatings()}}/>
     </View>
   );
 }
