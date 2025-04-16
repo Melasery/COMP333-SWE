@@ -8,11 +8,12 @@ export default function DeleteListScreen({navigation}) {
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState(0);
   const { user } = useAuth();
-  const username = user.username;
 
   
 
   const fetchUserRatings = async () => {
+    const username = user.username;
+
     console.log(user);
     console.log(username);
     try {
@@ -32,7 +33,7 @@ export default function DeleteListScreen({navigation}) {
             const isJson = contentType && contentType.includes("application/json");
       
             const text = isJson ? await response.json() : await response.text();
-            console.log("Raw create response:", text);
+            console.log("Raw deleete response:", text);
       
             if (isJson) {
               if (text == []) {
@@ -53,6 +54,8 @@ export default function DeleteListScreen({navigation}) {
   };
 
   const deleteRating = async () => {
+    const username = user.username;
+
     try {
       const res = await fetch(`${BASE_URL}/rating/delete?id=${id}`, {
         method: "DELETE",
