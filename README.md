@@ -12,8 +12,6 @@ This project started as a landing page for **Homework 1 in COMP 333**. For **Hom
 - **User Authentication**: Register, log in, and log out securely
 - **CRUD Operations**: Add, view, update, and delete song ratings
 - **MySQL Database**: Stores user credentials and song ratings
-- **Session Management**: Users stay logged in with PHPSESSID
-- **Deployment**: Hosted on InfinityFree
 
 Each team member contributed **equally (33.33%)** to the project.
 
@@ -32,7 +30,6 @@ Each team member contributed **equally (33.33%)** to the project.
 - Users **cannot edit or delete ratings added by others**
 
 ### **Database Integration**
-- MySQL database hosted on **InfinityFree**
 - Two tables:
   - `login` (stores usernames and hashed passwords)
   - `ratings` (stores song ratings with a foreign key to `login`)
@@ -50,7 +47,7 @@ Each team member contributed **equally (33.33%)** to the project.
 ### Setup XAMPP (Local Development)**
 1. Download and install **XAMPP** from [Apache Friends](https://www.apachefriends.org/)
 2. Start **Apache** and **MySQL** from the XAMPP Control Panel
-3. Place all project files inside the `htdocs/` folder
+3. Place all project files inside the `htdocs/` folder into XAMPP's htdocs folder
 
 ### **2. Create the MySQL Database (Local)**
 1. Open phpMyAdmin (`http://localhost/phpmyadmin`)
@@ -223,6 +220,19 @@ CREATE TABLE ratings (
     FOREIGN KEY (username) REFERENCES login(username) ON DELETE CASCADE
 );
 ```
+## React Setup Instructions
+Create a new expo project with `npx create-expo-app <your app name>`.
+Then, copy the following files from the github to your project:
+- NeuroTuneFrontend/constants/api.js into your project's constants folder
+- Place the context folder into the folder for the entire project (alongside app, constants, etc.)
+- Place NeuroTuneFrontend/app/_layout.jsx into the project's app folder
+- Place the NeuroTuneFrontend/app/(app) and NeuroTuneFrontend/app/(auth) folders into your project's app folder
+
+Finally, there are two remaining steps to set up the project:
+- Delete the _layout.tsx file in your project's app folder
+- Edit api.js (should be in the constants folder) and change the base url to contain your computer's ip adress and your XAMPP port.
+
+From there, you should be okay to cd into your folder from your command prompt and start expo like usual.
 
 ## Postman Photos
 
@@ -235,3 +245,7 @@ GET:
 POST:
 
 <img width="1161" alt="Screenshot 2025-04-11 at 4 05 16 PM" src="https://github.com/user-attachments/assets/ee33702a-b3eb-43ae-ac8e-5f172701cf73" />
+
+### Felix:
+
+
