@@ -250,6 +250,3 @@ POST:
 <img src=assets/images/Postman-post.png />
 <img src=assets/images/Postman-get.png />
 
-### Marouan:
-<img src=assets/images/Postman_Post_Marouan.png />
-<img src=assets/images/Postman_Get_Marouan.png />
