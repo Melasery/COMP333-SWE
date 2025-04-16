@@ -188,41 +188,56 @@ class RatingController extends BaseController
                 
                 // Validate input
                 if (empty($arrQueryStringParams['id'])) {
-                    throw new Exception("Rating ID is required");
+                    $responseData = json_encode([
+                        'message' => 'ID name is required'
+                    ]);                 
                 }
-                if (empty($requestData['username'])) {
-                    throw new Exception("Username is required");
+                else if (empty($requestData['username'])) {
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]);                 
                 }
-                if (empty($requestData['song'])) {
-                    throw new Exception("Song title is required");
+                else if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song title is required'
+                    ]);                 
                 }
-                if (empty($requestData['artist'])) {
-                    throw new Exception("Artist name is required");
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist name is required'
+                    ]);                 
                 }
-                if (!isset($requestData['rating']) || !is_numeric($requestData['rating'])) {
-                    throw new Exception("Rating must be a number");
+                else if (!isset($requestData['rating']) || !is_numeric($requestData['rating'])) {
+                    $responseData = json_encode([
+                        'message' => 'Rating must be a number'
+                    ]);                 
                 }
-                if ($requestData['rating'] < 0 || $requestData['rating'] > 9) {
-                    throw new Exception("Rating must be between 0-9");
+                else if ($requestData['rating'] < 0 || $requestData['rating'] > 9) {
+                    $responseData = json_encode([
+                        'message' => 'Rating must be from 0-9'
+                    ]);                 
+                }else {
+                    $affectedRows = $ratingModel->updateRating(
+                        $arrQueryStringParams['id'],
+                        $requestData['username'],
+                        $requestData['song'],
+                        $requestData['artist'],
+                        $requestData['rating']
+                    );
+                    if ($affectedRows === 0) {
+                        throw new Exception("Rating not found or unauthorized");
+                    }
+    
+                    $responseData = json_encode([
+                        'message' => 'Rating updated successfully',
+                        'affected_rows' => $affectedRows
+                    ]);
                 }
 
                 // Update rating
-                $affectedRows = $ratingModel->updateRating(
-                    $arrQueryStringParams['id'],
-                    $requestData['username'],
-                    $requestData['song'],
-                    $requestData['artist'],
-                    $requestData['rating']
-                );
 
-                if ($affectedRows === 0) {
-                    throw new Exception("Rating not found or unauthorized");
-                }
 
-                $responseData = json_encode([
-                    'message' => 'Rating updated successfully',
-                    'affected_rows' => $affectedRows
-                ]);
+                
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
                 $strErrorHeader = 'HTTP/1.1 400 Bad Request';
