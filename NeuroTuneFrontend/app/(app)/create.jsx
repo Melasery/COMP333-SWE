@@ -1,65 +1,81 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, Text } from "react-native";
-import BASE_URL from "../constants/api";
+import { View, TextInput, Button, StyleSheet, Text, Alert } from "react-native";
+import { useAuth } from "../../context/AuthContext";
+import BASE_URL from "../../constants/api"; // Your API base URL
+
 
 export default function CreateScreen() {
-  const [username, setUsername] = useState("");
+  //const [username, setUsername] = useState("");
   const [song, setSong] = useState("");
   const [artist, setArtist] = useState("");
   const [rating, setRating] = useState("");
+  const { user } = useAuth();
 
   const createRating = async () => {
+    const username = user.username;
     try {
       const response = await fetch(`${BASE_URL}/rating/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, song, artist, rating: parseInt(rating) }),
+        body: JSON.stringify({ 
+          "username": username, 
+          "song": song, 
+          "artist": artist, 
+          "rating": parseInt(rating) 
+        }),
       });
 
-      const text = await response.text();
-      console.log("Raw response:", text);
+      if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+      
+            const contentType = response.headers.get("Content-Type");
+            const isJson = contentType && contentType.includes("application/json");
+      
+            const text = isJson ? await response.json() : await response.text();
+            console.log("Raw create response:", text);
+      
+            if (isJson) {
+              if (text.message === "Rating created successfully") {
+                Alert.alert("Rating created!");
+              } else {
+                Alert.alert("Rating creation failed: ", text.message || "Please try again.");
+              }
+            } else {
+              Alert.alert("Registration Possibly Worked", "Check server — response was not JSON.");
+            }
 
-      try {
-        const data = JSON.parse(text);
-        alert("Rating created!");
-        console.log(data);
-      } catch (err) {
-        console.error("Failed to parse response as JSON:", err);
-        alert("Server error (invalid JSON)");
-      }
     } catch (err) {
       console.error("Error creating rating:", err);
-      alert("Failed to create rating.");
+      Alert.alert("Failed to create rating.");
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Add a New Rating</Text>
-      <TextInput
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-        style={styles.input}
-      />
+      <Text>Song Title:</Text>
       <TextInput
         placeholder="Song Title"
         value={song}
         onChangeText={setSong}
         style={styles.input}
       />
+      <Text>Artist Name:</Text>
       <TextInput
         placeholder="Artist"
         value={artist}
         onChangeText={setArtist}
         style={styles.input}
       />
+      <Text>Rating:</Text>
       <TextInput
         placeholder="Rating (0-9)"
         value={rating}
         onChangeText={setRating}
         keyboardType="numeric"
         style={styles.input}
+        maxLength={1}
       />
       <Button title="Submit Rating" onPress={createRating} />
     </View>
