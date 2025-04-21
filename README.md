@@ -47,7 +47,7 @@ Each team member contributed **equally (33.33%)** to the project.
 ### Setup XAMPP (Local Development)**
 1. Download and install **XAMPP** from [Apache Friends](https://www.apachefriends.org/)
 2. Start **Apache** and **MySQL** from the XAMPP Control Panel
-3. Place all project files inside the `htdocs/` folder into XAMPP's htdocs folder
+3. Place all project files inside the `htdocs/` folder into XAMPP's htdocs folder (except for the tests folder)
 
 ### **2. Create the MySQL Database (Local)**
 1. Open phpMyAdmin (`http://localhost/phpmyadmin`)
@@ -250,3 +250,9 @@ POST:
 <img src=assets/images/Postman-post.png />
 <img src=assets/images/Postman-get.png />
 
+## PHP Unit Tests
+Create a folder in your computer's version of htdocs to hold the unit tests, and inside that folder install phpunit and guzzle (using the same instructions from Professor Zimmeck's tutorial). Then, place the StackTest.php file from the htdocs/tests folder into your unit test folder. Then in the command line, cd to your folder and run the unit test using the following command:
+
+.\vendor\bin\phpunit StackTest.php
+
+(Note: This command is for Windows's command prompt, adjust the syntax for your OS accordingly.)
