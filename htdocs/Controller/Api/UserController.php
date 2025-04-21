@@ -90,23 +90,31 @@ class UserController extends BaseController
                 $userModel = new UserModel();
                 
                 if (empty($requestData['username']) || empty($requestData['password'])) {
-                    throw new Exception("Username and password required");
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]);                 
                 }
-
-                $user = $userModel->getUserByUsername($requestData['username']);
+                else {
+                    $user = $userModel->getUserByUsername($requestData['username']);
                 
-                if (empty($user)) {
-                    throw new Exception("Invalid credentials");
+                    if (empty($user)) {
+                        $responseData = json_encode([
+                            'message' => 'Invalid Credentials'
+                        ]);                 
+                    }
+    
+                    else if (!password_verify($requestData['password'], $user[0]['password'])) {
+                        $responseData = json_encode([
+                            'message' => 'Invalid Credentials'
+                        ]);                 
+                    }
+                    else {
+                        $responseData = json_encode([
+                            'message' => 'Login successful',
+                            'username' => $user[0]['username']
+                        ]);
+                    }
                 }
-
-                if (!password_verify($requestData['password'], $user[0]['password'])) {
-                    throw new Exception("Invalid credentials");
-                }
-
-                $responseData = json_encode([
-                    'message' => 'Login successful',
-                    'username' => $user[0]['username']
-                ]);
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
                 $strErrorHeader = 'HTTP/1.1 401 Unauthorized';
@@ -119,7 +127,7 @@ class UserController extends BaseController
         if (!$strErrorDesc) {
             $this->sendOutput(
                 $responseData,
-                ['Content-Type: application/json', 'HTTP/1.1 200 OK']
+                ['Content-Type: application/json', 'HTTP/1.1 201 OK']
             );
         } else {
             $this->sendOutput(
