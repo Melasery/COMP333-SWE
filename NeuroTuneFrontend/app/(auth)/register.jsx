@@ -25,7 +25,7 @@ export default function RegisterScreen() {
 
     try {
       // Send registration request
-      const response = await fetch(`http://172.21.220.168:8080/index.php/user/register`, {
+      const response = await fetch(`${BASE_URL}/user/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
