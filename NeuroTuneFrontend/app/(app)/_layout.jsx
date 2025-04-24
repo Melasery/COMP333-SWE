@@ -8,6 +8,7 @@ export default function appLayout() {
       <Tabs.Screen name="update" options={{ title: "Update" }} />
       <Tabs.Screen name="delete" options={{ title: "Delete"}} />
       <Tabs.Screen name="logout" options={{ title: "Logout" }} />
+      <Tabs.Screen name="search" options={{ title: "Search"}} />
     </Tabs>
   );
 }
