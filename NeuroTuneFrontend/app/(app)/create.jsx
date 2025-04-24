@@ -5,12 +5,12 @@ import BASE_URL from "../../constants/api"; // Your API base URL
 
 
 export default function CreateScreen() {
-  //const [username, setUsername] = useState("");
   const [song, setSong] = useState("");
   const [artist, setArtist] = useState("");
   const [rating, setRating] = useState("");
   const { user } = useAuth();
 
+  //Sends create request to REST api
   const createRating = async () => {
     const username = user.username;
     try {
@@ -28,7 +28,6 @@ export default function CreateScreen() {
       if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
-      
             const contentType = response.headers.get("Content-Type");
             const isJson = contentType && contentType.includes("application/json");
       
@@ -37,6 +36,62 @@ export default function CreateScreen() {
       
             if (isJson) {
               if (text.message === "Rating created successfully") {
+                try {
+                  const lyrResponse = await fetch(`https://api.lyrics.ovh/v1/${artist}/${song}`, {
+                    method: "GET",
+                    headers: {"Content-Type": "application/json"}
+                  });
+                  if (!lyrResponse.ok) {
+                    console.log("Lyric Response not OK")
+                  }
+                  else {
+                    const lyrContentType = lyrResponse.headers.get("Content-Type");
+                    const lyrIsJson = lyrContentType && lyrContentType.includes("application/json");
+              
+                    const lyrText = lyrIsJson ? await lyrResponse.json() : await lyrResponse.text();
+                    console.log("Raw lyric response:", lyrText);
+                    console.log("Lyrics found");
+                    if (lyrIsJson && lyrText.lyrics !== "") {
+                      const lyrics = lyrText.lyrics;
+                    
+                      try {
+                        const lPostRes = await fetch(`${BASE_URL}/data/create`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json"},
+                          body: JSON.stringify({
+                            "song": song,
+                            "artist": artist,
+                            "lyrics": lyrics
+                          })
+                        });
+                        
+                        if (!lPostRes.ok) {
+                          console.log("Lyrics upload failed");
+                        }
+                        else {
+                          const lprContentType = lPostRes.headers.get("Content-Type");
+                          const lprIsJson = lprContentType && lprContentType.includes("application/json");
+                    
+                          const lprText = lprIsJson ? await lPostRes.json() : await lPostRes.text();
+                          console.log("Raw lyric upload response:", lprText);
+                          
+                          if (lprIsJson && lprText.message === "Data Created Sucessfully")
+                          console.log(lyrText.message);
+                          console.log("Lyrics uploaded successfully");
+                        }
+                      } catch (err) {
+                        console.log("Lyric Upload Error: ", err);
+                      }
+                    } else {
+                      console.log("Couldn't find lyrics");
+                    }
+
+                  }
+
+                } catch(err) {
+                  console.log("Error Finding Lyrics", err);
+                }
+
                 Alert.alert("Rating created!");
               } else {
                 Alert.alert("Rating creation failed: ", text.message || "Please try again.");
@@ -50,7 +105,8 @@ export default function CreateScreen() {
       Alert.alert("Failed to create rating.");
     }
   };
-
+  //Should look like a couple of text inputs and a submit button, each input is a different field for the rating
+  //No fields can be empty - rating must be a digit 0-9.
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Add a New Rating</Text>
