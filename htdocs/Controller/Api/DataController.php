@@ -35,23 +35,31 @@ class DataController extends BaseController
                     ]);       
                 }
                 else{
+                    $existingData = $dataModel->getDataBySongArtist($requestData['song'], $requestData['artist']);
+                    if (!empty($existingData)) {
+                        $responseData = json_encode([
+                            'message' => 'Data already exists'
+                        ]);                
+                    }    
+                    else {
+                        // Try to create data and catch DB-related errors
+                        try {
+                            $dataId = $dataModel->createData(
+                               $requestData['song'],
+                                $requestData['artist'],
+                                str_replace("\n", " ", $requestData['lyrics'])
+                            );
+                        } catch (Exception $e) {
+                            error_log("createData error: " . $e->getMessage());
+                         throw new Exception("Failed to insert data: " . $e->getMessage());
+                        }
     
-                // Try to create rating and catch DB-related errors
-                try {
-                    $dataId = $dataModel->createData(
-                        $requestData['song'],
-                        $requestData['artist'],
-                        $requestData['lyrics']
-                    );
-                } catch (Exception $e) {
-                    error_log("createRating error: " . $e->getMessage());
-                    throw new Exception("Failed to insert data: " . $e->getMessage());
-                }
-    
-                $responseData = json_encode([
-                    'message' => 'Data created successfully',
-                    'rating_id' => $dataId
-                ]);
+                        $responseData = json_encode([
+                           'message' => 'Data created successfully',
+                            'data_id' => $dataId
+                        ]);
+                    }
+
                 }
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
