@@ -71,6 +71,13 @@ CREATE TABLE ratings (
     rating INT NOT NULL CHECK (rating BETWEEN 0 AND 9),
     FOREIGN KEY (username) REFERENCES login(username) ON DELETE CASCADE
 );
+
+
+CREATE TABLE songdata (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  song VARCHAR(255) NOT NULL,
+  artist VARCHAR(255) NOT NULL,
+  lyrics VARCHAR(4080) NOT NULL
 ```
 
 ### Configure Database Connection**
