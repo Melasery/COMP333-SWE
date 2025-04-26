@@ -83,6 +83,94 @@ class DataController extends BaseController
         }
     }
 
+    public function createSimAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+    
+                // Validate input
+                if (empty($requestData['song1'])) {
+                    $responseData = json_encode([
+                        'message' => 'First song is required'
+                    ]);                
+                }
+                else if (empty($requestData['artist1'])) {
+                    $responseData = json_encode([
+                        'message' => 'First artist name is required'
+                    ]);                 
+                }
+                else if (empty($requestData['song2'])) {
+                    $responseData = json_encode([
+                        'message' => 'Second song is required'
+                    ]);       
+                }
+                else if (empty($requestData['artist2'])) {
+                    $responseData = json_encode([
+                        'message' => 'Second artist is required'
+                    ]);
+                }
+                else if (empty($requestData['similarity'])) {
+                    $responseData = json_encode([
+                        'message' => 'Similarity Score is required'
+                    ]);
+                }
+                else{
+                    $existingData = $dataModel->getSim($requestData['song1'], $requestData['artist1'], $requestData['song2'], $requestData['artist2']);
+                    if (!empty($existingData)) {
+                        $responseData = json_encode([
+                            'message' => 'Data already exists'
+                        ]);                
+                    }    
+                    else {
+                        try {
+                            $dataId = $dataModel->createSim(
+                               $requestData['song1'],
+                                $requestData['artist1'],
+                                $requestData['song2'],
+                                $requestData['artist2'],
+                                $requestData['similarity']
+                            );
+                        } catch (Exception $e) {
+                            error_log("createData error: " . $e->getMessage());
+                         throw new Exception("Failed to insert data: " . $e->getMessage());
+                        }
+    
+                        $responseData = json_encode([
+                           'message' => 'Similarity Score created successfully',
+                            'data_id' => $dataId
+                        ]);
+                    }
+
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
     public function getSongAction()
     {
         $strErrorDesc = '';
@@ -162,6 +250,67 @@ class DataController extends BaseController
             $this->sendOutput(
                 $responseData,
                 ['Content-Type: application/json', 'HTTP/1.1 200 OK']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
+    public function listExclusionAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+    
+                // Validate input
+                if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song is required'
+                    ]);                
+                }
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist name is required'
+                    ]);                 
+                }
+                else{
+                        try {
+                            $arrData = $dataModel->getDataExcludingSongArtist(
+                               $requestData['song'],
+                                $requestData['artist']
+                            );
+                        } catch (Exception $e) {
+                            error_log("getExclusion error: " . $e->getMessage());
+                         throw new Exception("Failed to get data: " . $e->getMessage());
+                        }
+    
+                        $responseData = json_encode($arrData);
+
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
             );
         } else {
             $this->sendOutput(
