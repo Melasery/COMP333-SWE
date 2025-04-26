@@ -78,6 +78,15 @@ CREATE TABLE songdata (
   song VARCHAR(255) NOT NULL,
   artist VARCHAR(255) NOT NULL,
   lyrics VARCHAR(4080) NOT NULL
+);
+
+CREATE TABLE lyricsimilarity (
+  song1 VARCHAR(255),
+  artist1 VARCHAR(255),
+  song2 VARCHAR(255),
+  artist2 VARCHAR(255),
+  similarity INT(3)
+);
 ```
 
 ### Configure Database Connection**
