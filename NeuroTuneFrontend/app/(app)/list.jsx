@@ -1,23 +1,41 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Button } from "react-native";
-import BASE_URL from "../../constants/api"; 
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Button,
+} from "react-native";
+import BASE_URL from "../../constants/api";
+
+const EMOTIONS = ["sad", "happy", "excited", "fear", "anger", "nostalgia"];
 
 export default function ListScreen() {
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch all ratings (and ratios)
   const fetchRatings = async () => {
+    setLoading(true);
     try {
-      //Gets a list of everyone's ratings, not just the user's.
-      //This page is just for viewing all ratings.
-      const response = await fetch(`${BASE_URL}/rating/list`);
+      const response = await fetch(`${BASE_URL}/rating/list`, {
+        credentials: "include",
+      });
       const data = await response.json();
-      setRatings(data);
+      const arr = Array.isArray(data) ? data : data.ratings;
+      setRatings(arr || []);
     } catch (error) {
       console.error("Error fetching ratings:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Stubbed—just logs the button press for now
+  const handleEmotionPress = (ratingId, emotion) => {
+    console.log(`Emotion "${emotion}" clicked on rating #${ratingId}`);
+    // TODO: hook up to your backend when ready
   };
 
   useEffect(() => {
@@ -30,22 +48,45 @@ export default function ListScreen() {
       <Text style={styles.song}>🎵 {item.song}</Text>
       <Text style={styles.artist}>🎤 {item.artist}</Text>
       <Text style={styles.rating}>⭐ {item.rating}/9</Text>
+
+      <View style={styles.emotionsContainer}>
+        {EMOTIONS.map((emo) => (
+          <View key={emo} style={styles.emotionButton}>
+            <Button
+              title={emo}
+              onPress={() => handleEmotionPress(item.id, emo)}
+            />
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.ratiosContainer}>
+        <Text>😊 {item.happy_ratio?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😢 {item.sad_ratio?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😃 {item.excited_ratio?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😱 {item.fear_ratio?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😡 {item.anger_ratio?.toFixed(2) ?? "0.00"}</Text>
+        <Text>🥲 {item.nostalgia_ratio?.toFixed(2) ?? "0.00"}</Text>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>All Ratings</Text>
+      <Text style={styles.count}>Loaded {ratings.length} ratings</Text>
+
       {loading ? (
         <ActivityIndicator size="large" />
       ) : (
         <FlatList
           data={ratings}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(_, idx) => idx.toString()}
           renderItem={renderItem}
         />
       )}
-      <Button title = "refresh list" onPress = {() => {setLoading(true);fetchRatings()}}/>
+
+      <Button title="Refresh List" onPress={fetchRatings} />
     </View>
   );
 }
@@ -60,8 +101,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: "center",
+  },
+  count: {
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: "center",
+    color: "#666",
   },
   card: {
     backgroundColor: "#f4f4f4",
@@ -81,5 +128,19 @@ const styles = StyleSheet.create({
   rating: {
     marginTop: 4,
     color: "#555",
+  },
+  emotionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 10,
+  },
+  emotionButton: {
+    marginRight: 5,
+    marginBottom: 5,
+  },
+  ratiosContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
   },
 });
