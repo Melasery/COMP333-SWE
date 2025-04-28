@@ -60,20 +60,9 @@ export default function RegisterScreen() {
       }
     } catch (err) {
       console.error("Register error:", err);
+      console.error(err.getMessage())
       Alert.alert("Error", "Failed to register.");
     }
-
-    /*fetch(`http://172.21.220.168:8080/index.php/user/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "username": username,
-        "password": password,
-        "confirm_password": confirm_password,
-      })
-    }).then(res => {console.log("Result: " + res)}).catch(err => console.log("Error: " + err))*/
   };
 
   return (
