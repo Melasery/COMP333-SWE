@@ -71,4 +71,40 @@ class DataModel extends Database
             [['type' => 'i', 'value' => $limit]]
         );
     }
+
+    public function getSuggestion($username, $song, $artist)
+    {
+        return $this->select(
+            "SELECT * FROM suggestion WHERE username = ? AND song = ? AND artist = ?",
+            [['type' => 's', 'value' => $username], ['type' => 's', 'value' => $song], ['type' => 's', 'value' => $artist]]
+        );
+    }
+
+    public function updatePoints($username, $song, $artist, $points)
+    {
+        $this->executeStatement(
+            "UPDATE suggestion SET points = ? WHERE username = ? AND song = ? AND artist = ?",
+            [
+                ['type' => 's', 'value' => $points],
+                ['type' => 's', 'value' => $username],
+                ['type' => 's', 'value' => $song],
+                ['type' => 's', 'value' => $artist],
+            ]
+        );
+        return $this->connection->affected_rows;
+    }
+
+    public function createSuggestion($username, $song, $artist, $points)
+    {
+        $this->executeStatement(
+            "INSERT INTO suggestion (username, song, artist, points) VALUES (?,?,?,?)",
+            [
+                ['type' => 's', 'value' => $username],
+                ['type' => 's', 'value' => $song],
+                ['type' => 's', 'value' => $artist],
+                ['type' => 'i', 'value' => $points]
+            ]
+        );
+        return $this-> connection->insert_id;
+    }
 }
