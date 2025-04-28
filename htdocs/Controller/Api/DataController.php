@@ -191,10 +191,65 @@ class DataController extends BaseController
                 else {
                     $arrData = $dataModel->getDataBySongArtist($requestData['song'], $requestData['artist']);
                     if (count($arrData) != 0) {
-                        $responseData = json_encode($arrData[0]);
+                        $responseData = json_encode(['message' => 'Song found']);
                     }
                     else {
-                        throw new Exception("Data not found");
+                        $responseData = json_encode(['message' => 'Song not found']);
+                    }
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 500 Internal Server Error';
+            }
+
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Uprocessable Entity';
+        }
+
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 200 OK']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
+    public function getSimAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+        $arrQueryStringParams = $this->getQueryStringParams();
+
+        if(strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+
+                if (empty($requestData['song1'])) {
+                    throw new Exception("First Song is required");
+                }
+                else if (empty($requestData['artist1'])) {
+                    throw new Exception("First Artist is required");
+                }
+                else if (empty($requestData['song2'])) {
+                    throw new Exception("Second Song is required");
+                }                
+                else if (empty($requestData['artist2'])) {
+                    throw new Exception("Second Artist is required");
+                }                
+                else {
+                    $arrData = $dataModel->getSim($requestData['song1'], $requestData['artist1'], $requestData['song2'], $requestData['artist2']);
+                    if (count($arrData) != 0) {
+                        $responseData = json_encode(['message' => 'Song found', 'data' => $arrData[0]['similarity']]);
+                    }
+                    else {
+                        $responseData = json_encode(['message' => 'Song not found']);
                     }
                 }
             } catch (Exception $e) {
@@ -297,6 +352,95 @@ class DataController extends BaseController
     
                         $responseData = json_encode($arrData);
 
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
+    public function newSuggestionAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+    
+                // Validate input
+                if (empty($requestData['username'])) {
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]);                
+                }
+                else if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song title is required'
+                    ]);                 
+                }
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist Name is required'
+                    ]);
+                }
+                else if (empty($requestData['points'])) {
+                    $responseData = json_encode([
+                        'message' => 'Points are required'
+                    ]);
+                }
+                else{
+                    $existingSuggestion = $dataModel->getSuggestion($requestData['username'], $requestData['song'], $requestData['artist']);
+                    if (!empty($existingSuggestion)) {
+                        $newPoints = $existingSuggestion[0]["points"] + $requestData['points'];
+                        try {
+                            $arrData = $dataModel->updatePoints(
+                                $requestData['username'],
+                                 $requestData['song'],
+                                 $requestData['artist'],
+                                 $newPoints
+                             );                        
+                        } catch (Exception $e) {
+                            error_log("update suggestion error: " . $e->getMessage());
+                            throw new Exception("Failed to update suggestion: " . $e->getMessage());
+                        }
+                        $responseData = json_encode(['message' => 'suggestion updated']);
+                    }
+                    else {
+                        try {
+                            $arrData = $dataModel->createSuggestion(
+                                $requestData['username'],
+                                 $requestData['song'],
+                                 $requestData['artist'],
+                                 $requestData['points']
+                             );                        
+                        } catch (Exception $e) {
+                            error_log("create suggestion error: " . $e->getMessage());
+                            throw new Exception("Failed to create suggestion: " . $e->getMessage());
+                        }
+                        $responseData = json_encode(['message' => 'suggestion created']);
+                    }
                 }
             } catch (Exception $e) {
                 $strErrorDesc = $e->getMessage();
