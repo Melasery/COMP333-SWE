@@ -129,6 +129,48 @@ class RatingController extends BaseController
         }
     }
 
+    public function nonUserlistAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+        $arrQueryStringParams = $this->getQueryStringParams();
+
+        if(strtoupper($requestMethod) == 'POST') {
+            try {
+                $ratingModel = new RatingModel();
+                $intLimit = 100;
+
+                if (empty($requestData['username'])) {
+                    throw new Exception("Username is required");
+                }
+                else {
+                    $arrRatings = $ratingModel->getRatingNotByUser($requestData['username'], $intLimit);
+                    $responseData = json_encode($arrRatings);
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 500 Internal Server Error';
+            }
+
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Uprocessable Entity';
+        }
+
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 200 OK']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
     /**
      * "/rating/list" Endpoint - Get all ratings
      */

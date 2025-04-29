@@ -27,6 +27,14 @@ class RatingModel extends Database
         );
     }
 
+    public function getRatingNotByUser($user, $limit)
+    {
+        return $this->select(
+            "SELECT * FROM ratings WHERE username != ? LIMIT ?",
+            [['type' => 's', 'value' => $user], ['type' => 'i', 'value'=>$limit]]
+        );
+    }
+
     public function createRating($username, $song, $artist, $rating)
     {
         $this->executeStatement(
