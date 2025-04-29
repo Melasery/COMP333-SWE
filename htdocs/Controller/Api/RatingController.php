@@ -403,4 +403,56 @@ class RatingController extends BaseController
             );
         }
     }
+
+    public function getUserSongArtistAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+        $arrQueryStringParams = $this->getQueryStringParams();
+
+        if(strtoupper($requestMethod) == 'POST') {
+            try {
+                $ratingModel = new RatingModel();
+                $intLimit = 100;
+
+                if (empty($requestData['username'])) {
+                    throw new Exception("Username is required");
+                }
+                else if (empty($requestData['song'])) {
+                    throw new Exception("Song is required");
+                }
+                else if (empty($requestData['artist'])) {
+                    throw new Exception("Artist is required");
+                }
+                else {
+                    $arrRatings = $ratingModel->getRatingByUserSongArtist($requestData['username'], $requestData['song'], $requestData['artist']);
+                    if (empty($arrRatings)) {
+                        $responseData = json_encode(['message' => 'rating not found']);
+                    } else {
+                        $responseData = json_encode(['message' => 'rating found', 'rating' => $arrRatings[0]["rating"]]);
+                    }
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 500 Internal Server Error';
+            }
+
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Uprocessable Entity';
+        }
+
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 200 OK']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
 }
