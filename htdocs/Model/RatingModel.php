@@ -35,6 +35,14 @@ class RatingModel extends Database
         );
     }
 
+    public function getRatingByUserSongArtist($user, $song, $artist)
+    {
+        return $this->select(
+            "SELECT * FROM ratings WHERE username = ? AND song = ? AND artist = ?",
+            [['type' => 's', 'value' => $user], ['type' => 's', 'value' => $song], ['type' => 's', 'value' => $artist]]
+        );
+    }
+
     public function createRating($username, $song, $artist, $rating)
     {
         $this->executeStatement(
