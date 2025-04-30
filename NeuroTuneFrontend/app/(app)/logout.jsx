@@ -30,6 +30,9 @@ export default function Logout() {
   const [ratingEmptyAverage, setRatingEmptyAverage] = useState(false);
   const [rComponentWeight, setRComponentRate] = useState(99);
 
+  const [emotionOnlyTop, setEmotionOnlyTop] = useState(false);
+  const[emotionWeight, setEmotionWeight] = useState(99);
+
   const [flatRatingWeight, setFlatRatingWeight] = useState(false);
 
   function containsObject(obj, list) {
@@ -81,6 +84,7 @@ export default function Logout() {
         } catch (err) {
           console.error(err);
         }
+        console.log("Similarity for " + candidates[y].song + ": " + similarity);
         let ratingComponent = 0;
         let usernamesFound = 0;
         for (let a = 0; a < 3; a++) {
@@ -113,9 +117,54 @@ export default function Logout() {
         } else {
           ratingComponent = ratingComponent / usernamesFound;
         }
+
+        let baseEmotions = [0,0,0,0,0,0];
+        let candidateEmotions = [0,0,0,0,0,0];
+        try {
+          const emotionResponseBase = await fetch(`${BASE_URL}/data/getEmotionTally`, {
+            method: "POST",
+            headers: { "Content-Type" : "application/json" },
+            body: JSON.stringify({song: bases[x].song, artist: bases[x].artist})
+          });
+
+          const emotionBaseData = await emotionResponseBase.json();
+          if (emotionBaseData.total !== 0) {
+            baseEmotions = [(emotionBaseData.sad / emotionBaseData.total), (emotionBaseData.happy / emotionBaseData.total), (emotionBaseData.excited / emotionBaseData.total), (emotionBaseData.fear / emotionBaseData.total), (emotionBaseData.anger / emotionBaseData.total), (emotionBaseData.nostalgia / emotionBaseData.total)];
+          }
+
+          const emotionResponseCand = await fetch(`${BASE_URL}/data/getEmotionTally`, {
+            method: "POST",
+            headers: { "Content-Type" : "application/json"},
+            body: JSON.stringify({song: candidates[y].song, artist: candidates[y].artist})
+          });
+
+          const emotionCandData = await emotionResponseCand.json();
+          if (emotionCandData.total !== 0) {
+            candidateEmotions = [(emotionCandData.sad / emotionCandData.total), (emotionCandData.happy / emotionCandData.total), (emotionCandData.excited / emotionCandData.total), (emotionCandData.fear / emotionCandData.total), (emotionCandData.anger / emotionCandData.total), (emotionCandData.nostalgia / emotionCandData.total)];
+          }
+        } catch (err) {
+          console.error("Error retrieving emotion tally: " + err);
+        }
+
+        let emotionScore = 0;
+        if (emotionOnlyTop) {
+          let topIndex = 0;
+          for (let i = 0; i < 6; i++) {
+            if(baseEmotions[topIndex] < baseEmotions[i]) {
+              topIndex = i;
+            }
+          }
+          emotionScore = 100 * (1 - (Math.abs(baseEmotions[topIndex] - candidateEmotions[topIndex])));
+        } else {
+          for (let i = 0; i < 6; i++) {
+            emotionScore += 100 * (1 - (Math.abs(baseEmotions[i] - candidateEmotions[i])));
+          }
+          emotionScore = emotionScore / 6;
+        }
+        console.log("Emotion score for " + candidates[y].song + ": " + emotionScore);
         let totalScore = flatRatingWeight
-          ? ((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent)
-          : (bases[x].rating + 1) * (((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent));
+          ? ((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent) + ((emotionWeight / 100) * emotionScore)
+          : (bases[x].rating + 1) * (((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent) + ((emotionWeight / 100) * emotionScore));
         updateCandidates(candidatePoints, { song: candidates[y].song, artist: candidates[y].artist, points: totalScore });
       }
     }
@@ -203,18 +252,21 @@ export default function Logout() {
             maxLength={2}
           />
           <Text style={styles.sectionTitle}>Other User's Ratings</Text>
+          <Text style = {styles.sectionSub}>First user:</Text>
           <TextInput
             style={styles.input}
             placeholder="First user"
             value={firstChoiceUser}
             onChangeText={setFirstChoiceUser}
           />
+          <Text style = {styles.sectionSub}>Second user:</Text>
           <TextInput
             style={styles.input}
             placeholder="Second user"
             value={secondChoiceUser}
             onChangeText={setSecondChoiceUser}
           />
+          <Text style = {styles.sectionSub}>Third user:</Text>
           <TextInput
             style={styles.input}
             placeholder="Third user"
@@ -233,11 +285,28 @@ export default function Logout() {
             <Switch value={ratingEmptyAverage} onValueChange={setRatingEmptyAverage} />
             <Text style={styles.toggleLabel}>Average</Text>
           </View>
+          <Text style={styles.sectionSub}>How much should other user's ratings be weighted (0-99)?</Text>
           <TextInput
             style={styles.input}
             placeholder="Rating weight (0-99)"
             value={String(rComponentWeight)}
             onChangeText={text => setRComponentRate(Number(text))}
+            keyboardType="numeric"
+            maxLength={2}
+          />
+          <Text style = {styles.sectionTitle}>Emotions</Text>
+          <Text style={styles.sectionSub}>Compare all emotions or only the top emotion?</Text>
+          <View style={styles.toggleContainer}>
+            <Text style = {styles.toggleLabel}>All</Text>
+            <Switch value = {emotionOnlyTop} onValueChange={setEmotionOnlyTop}/>
+            <Text style = {styles.toggleLabel}>Only top</Text>
+          </View>
+          <Text style={styles.sectionSub}>How much should emotions be weighted (0-99)?</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Emotion weight (0-99)"
+            value={String(emotionWeight)}
+            onChangeText={text => setEmotionWeight(Number(text))}
             keyboardType="numeric"
             maxLength={2}
           />
