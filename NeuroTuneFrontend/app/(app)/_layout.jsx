@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 export default function appLayout() {
   return (
     <Tabs>
+      <Tabs.Screen name="chat" options={{ title: "Chat" }} />
       <Tabs.Screen name="create" options={{ title: "Create" }} />
       <Tabs.Screen name="list" options={{ title: "Read" }} />
       <Tabs.Screen name="update" options={{ title: "Update" }} />
