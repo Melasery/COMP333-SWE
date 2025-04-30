@@ -89,7 +89,7 @@ CREATE TABLE lyricsimilarity (
 );
 
 CREATE TABLE `emotions` (
-  `id` int(11) NOT NULL,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user` varchar(30) NOT NULL,
   `song` varchar(255) NOT NULL,
   `artist` varchar(255) NOT NULL,
