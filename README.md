@@ -89,7 +89,7 @@ CREATE TABLE lyricsimilarity (
 );
 
 CREATE TABLE `emotions` (
-  `id` int(11) NOT NULL,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `user` varchar(30) NOT NULL,
   `song` varchar(255) NOT NULL,
   `artist` varchar(255) NOT NULL,
@@ -285,3 +285,13 @@ Create a folder in your computer's version of htdocs to hold the unit tests, and
 .\vendor\bin\phpunit StackTest.php
 
 (Note: This command is for Windows's command prompt, adjust the syntax for your OS accordingly.)
+
+## How can Generative AI be used to test the app?
+In addition to coming up with tests for the code, another way AI could be used is to test for things that don't necessarily have a provably correct or incorrect answer. For example, our feature for the project is a song suggestion algorithm, but the question of is most "similar" to another isn't something objective that can be determined to be working correctly or incorrectly with regular tests. However, an AI model that can come up with an estimate of which songs should be judged as similar can then create tests that determine the accuracy of the program's algorithm. That way, a song suggestion algorithm can be deemed accurate / inaccurate even if there aren't necessarily any bugs in the code.
+
+## New Features for Project
+Our new feature that we added to our ratings app was a suggestion algorithm. On the profile page (previously the logout page), the user can request that the app suggest a song to them based off of their ratings. The algorithm is made up of three components, each of which are combined to give a score to each song that hasn't been personally rated by the logged in user, and then suggests the highest scoring song to the user. These components are:
+- lyric similarity, which uses an api call to an ai model to determine the similarity of two song's lyrics, and gives a score based off of how similar they are.
+- Other user's ratings, which lets a user input up to three other users whose opinions they often agree with / find valuable and gives a score based off of those user's ratings. The score is either based off of similarity in rating or just how high the rating is, depending on the user's choice.
+- Emotional similarity, which gives a score to a song candidate based off of how similar the emotional responses to the songs are to the user's rated songs. The emotional responses are sourced by another small feature that was added, which lets users note their emotional response to particular songs on the 'read' tab by pressing a button. Each user can pick one emotion per song/artist combination, and the emotional makeup of a song is determined by the percentage of how each user voted on the song.
+What makes our feature unique compared to other song suggestion algorithms is that we strived to give the user lots of choices in how to customize the algorithm to their liking. This includes letting them determine how much each component is weighed in the algorithm, picking which ratings to base the suggestions off of, whether to give each rating a flat weight or to weight higher rated songs better, and many other options. Therefore, our app's algorithm both allows for much more user choice than other algorithms would, but also gives them more transparency in knowing what parts of the algorithm are suggesting a song to them.
