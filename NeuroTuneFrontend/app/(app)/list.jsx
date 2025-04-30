@@ -8,12 +8,17 @@ import {
   Button,
 } from "react-native";
 import BASE_URL from "../../constants/api";
+import { useAuth } from "../../context/AuthContext";
+
 
 const EMOTIONS = ["sad", "happy", "excited", "fear", "anger", "nostalgia"];
 
 export default function ListScreen() {
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  
+  let ratingEmotions = [];
 
   // Fetch all ratings (and ratios)
   const fetchRatings = async () => {
@@ -23,7 +28,8 @@ export default function ListScreen() {
         credentials: "include",
       });
       const data = await response.json();
-      const arr = Array.isArray(data) ? data : data.ratings;
+      let arr = Array.isArray(data) ? data : data.ratings;
+
       setRatings(arr || []);
     } catch (error) {
       console.error("Error fetching ratings:", error);
@@ -33,15 +39,71 @@ export default function ListScreen() {
   };
 
   // Stubbed—just logs the button press for now
-  const handleEmotionPress = (ratingId, emotion) => {
-    console.log(`Emotion "${emotion}" clicked on rating #${ratingId}`);
-    // TODO: hook up to your backend when ready
-  };
+  const handleEmotionPress = async (rSong, rArtist, emotion) => {
+    console.log(user);
+    const rUser = user.username;
+    //console.log(`Emotion "${emotion}" clicked on rating #${ratingId}`);
+    let sad = false;
+    let happy = false;
+    let excited = false;
+    let fear = false;
+    let anger = false;
+    let nostalgia = false;
+    if (emotion === "sad") {
+      sad = true;
+    }
+    else if (emotion === "happy") {
+      happy = true;
+    }
+    else if (emotion === "excited") {
+      excited = true;
+    }
+    else if (emotion === "fear") {
+      fear = true;
+    }
+    else if (emotion === "anger") {
+      anger = true;
+    }
+    else {
+      nostalgia = true;
+    }
+      try {
+        let response = await fetch(`${BASE_URL}/data/addEmotion`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            "user" : rUser,
+            "song" : rSong,
+            "artist" : rArtist,
+            "sad": sad,
+            "happy": happy,
+            "excited": excited,
+            "fear": fear,
+            "anger": anger,
+            "nostalgia": nostalgia
+          })
+        });
+
+        let data = await response.json();
+
+        console.log(data);
+      } catch (err) {
+        console.error("Error uploading emotion: " + err);
+      }
+  }
+
 
   useEffect(() => {
     fetchRatings();
   }, []);
-
+  /*
+  <Text>😊 {item.happy?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😢 {item.sad}</Text>
+        <Text>😃 {item.excited?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😱 {item.fear?.toFixed(2) ?? "0.00"}</Text>
+        <Text>😡 {item.anger?.toFixed(2) ?? "0.00"}</Text>
+        <Text>🥲 {item.nostalgia?.toFixed(2) ?? "0.00"}</Text>
+  */
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.user}>👤 {item.username}</Text>
@@ -54,19 +116,14 @@ export default function ListScreen() {
           <View key={emo} style={styles.emotionButton}>
             <Button
               title={emo}
-              onPress={() => handleEmotionPress(item.id, emo)}
+              onPress={() => handleEmotionPress(item.song, item.artist, emo)}
             />
           </View>
         ))}
       </View>
 
       <View style={styles.ratiosContainer}>
-        <Text>😊 {item.happy_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😢 {item.sad_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😃 {item.excited_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😱 {item.fear_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😡 {item.anger_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>🥲 {item.nostalgia_ratio?.toFixed(2) ?? "0.00"}</Text>
+        
       </View>
     </View>
   );
