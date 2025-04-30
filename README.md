@@ -295,3 +295,29 @@ Our new feature that we added to our ratings app was a suggestion algorithm. On 
 - Other user's ratings, which lets a user input up to three other users whose opinions they often agree with / find valuable and gives a score based off of those user's ratings. The score is either based off of similarity in rating or just how high the rating is, depending on the user's choice.
 - Emotional similarity, which gives a score to a song candidate based off of how similar the emotional responses to the songs are to the user's rated songs. The emotional responses are sourced by another small feature that was added, which lets users note their emotional response to particular songs on the 'read' tab by pressing a button. Each user can pick one emotion per song/artist combination, and the emotional makeup of a song is determined by the percentage of how each user voted on the song.
 What makes our feature unique compared to other song suggestion algorithms is that we strived to give the user lots of choices in how to customize the algorithm to their liking. This includes letting them determine how much each component is weighed in the algorithm, picking which ratings to base the suggestions off of, whether to give each rating a flat weight or to weight higher rated songs better, and many other options. Therefore, our app's algorithm both allows for much more user choice than other algorithms would, but also gives them more transparency in knowing what parts of the algorithm are suggesting a song to them.
+
+## New AI Chat Feature 
+
+To expand NeuroTune beyond rating and recommendation, we added a brand new **AI music chatbot** powered by OpenAI. This feature lets users interact with a chat assistant that recommends songs based on their mood, vibe, or activity.
+
+For example, a user can type:
+
+> "I'm feeling nostalgic, what should I listen to?"
+
+And the AI will reply with personalized suggestions like:
+
+> "Try *Landslide* by Fleetwood Mac or *Vienna* by Billy Joel."
+
+
+### OpenAI Key Note
+
+OpenAI keys are sensitive and cannot be pushed to GitHub due to automatic secret-scanning protections.
+
+- The line below in `config.php` needs to be manually filled in:
+
+```php
+define("OPENAI_API_KEY", "your-openai-key-here");
+```
+
+- The key used in development and testing will be **shared privately via email with Professor Zimmeck** so the feature can be tested and graded.
+
