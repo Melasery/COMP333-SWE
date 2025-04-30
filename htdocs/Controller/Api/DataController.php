@@ -463,4 +463,244 @@ class DataController extends BaseController
             );
         }
     }
+
+    public function getEmotionAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+    
+                // Validate input
+                if (empty($requestData['user'])) {
+                    $responseData = json_encode([
+                        'message' => 'Username is required'
+                    ]); 
+                }
+                else if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song is required'
+                    ]);                
+                }
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist name is required'
+                    ]);                 
+                }
+                else{
+                        try {
+                            $arrData = $dataModel->getEmotion(
+                                $requestData['user'],
+                               $requestData['song'],
+                                $requestData['artist']
+                            );
+                        } catch (Exception $e) {
+                            error_log("getExclusion error: " . $e->getMessage());
+                         throw new Exception("Failed to get data: " . $e->getMessage());
+                        }
+    
+                        $responseData = json_encode($arrData);
+
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
+    public function getEmotionTallyAction()
+    {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+    
+                // Validate input
+                if (empty($requestData['song'])) {
+                    $responseData = json_encode([
+                        'message' => 'Song is required'
+                    ]);                
+                }
+                else if (empty($requestData['artist'])) {
+                    $responseData = json_encode([
+                        'message' => 'Artist name is required'
+                    ]);                 
+                }
+                else{
+                        try {
+                            $arrData = $dataModel->emotionTally(
+                               $requestData['song'],
+                                $requestData['artist']
+                            );
+                        } catch (Exception $e) {
+                            error_log("getEmotionTally error: " . $e->getMessage());
+                         throw new Exception("Failed to get data: " . $e->getMessage());
+                        }
+                        $sad = 0;
+                        $happy = 0;
+                        $excited = 0;
+                        $fear = 0;
+                        $anger = 0;
+                        $nostalgia = 0;
+                        $total = 0;
+                        for ($i = 0; $i < count($arrData); $i++) {
+                            if ($arrData[$i]['sad']) {
+                                $sad += 1;
+                                $total += 1;
+                            }
+                            else if ($arrData[$i]['happy']) {
+                                $happy += 1;
+                                $total += 1;
+                            }
+                            else if ($arrData[$i]['excited']) {
+                                $excited += 1;
+                                $total += 1;
+                            }
+                            else if ($arrData[$i]['fear']) {
+                                $fear += 1;
+                                $total += 1;
+                            }
+                            else if ($arrData[$i]['anger']) {
+                                $anger += 1;
+                                $total += 1;
+                            }
+                            else if ($arrData[$i]['nostalgia']) {
+                                $nostalgia += 1;
+                                $total += 1;
+                            }
+                        }
+                        
+                        $responseData = json_encode(['sad' => $sad, 'happy' => $happy, 'excited' => $excited, 'fear' => $fear, 'anger' => $anger, 'nostalgia' => $nostalgia, 'total' => $total, 'message' => "Data retrieved"]);
+
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
+
+    public function addEmotionAction() {
+        $strErrorDesc = '';
+        $requestMethod = $_SERVER["REQUEST_METHOD"];
+        $requestData = $this->getRequestData();
+    
+        // Log the request to check if it's hitting and what it receives
+        error_log("HIT: /rating/create");
+        error_log("Incoming POST data: " . json_encode($requestData));
+    
+        if (strtoupper($requestMethod) == 'POST') {
+            try {
+                $dataModel = new DataModel();
+                    $existingData = $dataModel->getEmotion($requestData['user'], $requestData['song'], $requestData['artist']);
+                    if (!empty($existingData)) {
+                        try {
+                            $arrData = $dataModel->updateEmotion(
+                                $requestData['user'],
+                               $requestData['song'],
+                                $requestData['artist'],
+                                $requestData['sad'],
+                                $requestData['happy'],
+                                $requestData['excited'],
+                                $requestData['fear'],
+                                $requestData['anger'],
+                                $requestData['nostalgia']
+                             );                        
+                        } catch (Exception $e) {
+                            error_log("update suggestion error: " . $e->getMessage());
+                            throw new Exception("Failed to update suggestion: " . $e->getMessage());
+                        }
+                        $responseData = json_encode(['message' => 'suggestion updated']);
+                    }    
+                    else {
+                        // Try to create data and catch DB-related errors
+                        try {
+                            $dataId = $dataModel->createEmotion(
+                                $requestData['user'],
+                               $requestData['song'],
+                                $requestData['artist'],
+                                $requestData['sad'],
+                                $requestData['happy'],
+                                $requestData['excited'],
+                                $requestData['fear'],
+                                $requestData['anger'],
+                                $requestData['nostalgia']
+                            );
+                        } catch (Exception $e) {
+                            error_log("createEmotion error: " . $e->getMessage());
+                         throw new Exception("Failed to insert emotion: " . $e->getMessage());
+                        }
+    
+                        $responseData = json_encode([
+                           'message' => 'Emotion created successfully',
+                            'data_id' => $dataId
+                        ]);
+
+                }
+            } catch (Exception $e) {
+                $strErrorDesc = $e->getMessage();
+                $strErrorHeader = 'HTTP/1.1 400 Bad Request';
+            }
+        } else {
+            $strErrorDesc = 'Method not supported';
+            $strErrorHeader = 'HTTP/1.1 422 Unprocessable Entity';
+        }
+    
+        if (!$strErrorDesc) {
+            $this->sendOutput(
+                $responseData,
+                ['Content-Type: application/json', 'HTTP/1.1 201 Created']
+            );
+        } else {
+            $this->sendOutput(
+                json_encode(['error' => $strErrorDesc]), 
+                ['Content-Type: application/json', $strErrorHeader]
+            );
+        }
+    }
 }

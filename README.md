@@ -87,6 +87,19 @@ CREATE TABLE lyricsimilarity (
   artist2 VARCHAR(255),
   similarity INT(3)
 );
+
+CREATE TABLE `emotions` (
+  `id` int(11) NOT NULL,
+  `user` varchar(30) NOT NULL,
+  `song` varchar(255) NOT NULL,
+  `artist` varchar(255) NOT NULL,
+  `sad` tinyint(1) NOT NULL,
+  `happy` tinyint(1) NOT NULL,
+  `excited` tinyint(1) NOT NULL,
+  `fear` tinyint(1) NOT NULL,
+  `anger` tinyint(1) NOT NULL,
+  `nostalgia` tinyint(1) NOT NULL
+);
 ```
 
 ### Configure Database Connection**
