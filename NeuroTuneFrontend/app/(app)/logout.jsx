@@ -6,12 +6,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  TextInput
+  TextInput,
+  Switch
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import BASE_URL from "../../constants/api";
-//import { TextInput } from "react-native-web";
 
 export default function Logout() {
   const { user, logout } = useAuth();
@@ -26,13 +25,13 @@ export default function Logout() {
   const [firstChoiceUser, setFirstChoiceUser] = useState("");
   const [secondChoiceUser, setSecondChoiceUser] = useState("");
   const [thirdChoiceUser, setThirdChoiceUser] = useState("");
+
   const [ratingComponentProximity, setRatingComponentProximity] = useState(false);
   const [ratingEmptyAverage, setRatingEmptyAverage] = useState(false);
-  const [rComopnentWeight, setRComponentRate] = useState(99);
+  const [rComponentWeight, setRComponentRate] = useState(99);
 
   const [flatRatingWeight, setFlatRatingWeight] = useState(false);
 
-  // Utility functions (unchanged logic)
   function containsObject(obj, list) {
     return list.includes(obj);
   }
@@ -42,13 +41,14 @@ export default function Logout() {
   }
 
   function updateCandidates(existingPoints, newPoints) {
-    const idx = existingPoints.findIndex(p => p.song === newPoints.song && p.artist === newPoints.artist);
+    const idx = existingPoints.findIndex(
+      p => p.song === newPoints.song && p.artist === newPoints.artist
+    );
     if (idx > -1) {
       existingPoints[idx].points += newPoints.points;
     } else {
       existingPoints.push({ ...newPoints });
     }
-    console.log(existingPoints);
   }
 
   function findTop(suggestions) {
@@ -60,12 +60,8 @@ export default function Logout() {
 
   async function generateSuggestion(bases, candidates) {
     let candidatePoints = [];
-    console.log(bases.length);
     for (let x = 0; x < bases.length; x++) {
-      console.log("BASES: " + bases[x].song + " (" + x + ")");
       for (let y = 0; y < candidates.length; y++) {
-        
-        console.log("Testing" + candidates[y].song + " and " + bases[x].song);
         let similarity = 0;
         try {
           const response = await fetch(`${BASE_URL}/data/getSim`, {
@@ -87,85 +83,49 @@ export default function Logout() {
         }
         let ratingComponent = 0;
         let usernamesFound = 0;
-        for (a=0; a < 3; a ++) {
+        for (let a = 0; a < 3; a++) {
           try {
-              const responseBase = await fetch(`${BASE_URL}/rating/getUserSongArtist`, {
+            const responseBase = await fetch(`${BASE_URL}/rating/getUserSongArtist`, {
               method: "POST",
-              headers: { "Content-Type": "application/json"},
-              body: JSON.stringify({
-                username: firstChoiceUser,
-                song: bases[x].song,
-                artist: bases[x].artist
-              })
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: firstChoiceUser, song: bases[x].song, artist: bases[x].artist })
             });
-
             const responseCandidate = await fetch(`${BASE_URL}/rating/getUserSongArtist`, {
               method: "POST",
-              headers: { "Content-Type": "application/json"},
-              body: JSON.stringify({
-               username: firstChoiceUser,
-                song: candidates[y].song,
-                artist: candidates[y].artist
-              })
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: firstChoiceUser, song: candidates[y].song, artist: candidates[y].artist })
             });
-
             const jsonBase = await responseBase.json();
             const jsonCandidate = await responseCandidate.json();
-            console.log(jsonBase.message); console.log(jsonCandidate.message);
             if (jsonBase.message === "rating found" && jsonCandidate.message === "rating found" && ratingComponentProximity) {
-              usernamesFound += 1;
-              console.log(100 - Math.abs(jsonCandidate.rating - jsonBase.rating));
-              ratingComponent += (100 - Math.abs(jsonCandidate.rating - jsonBase.rating));
-              console.log(ratingComponent + " - Rating Component Score for this song combo");
+              usernamesFound++;
+              ratingComponent += 100 - Math.abs(jsonCandidate.rating - jsonBase.rating);
             } else if (jsonCandidate.message === "rating found" && !ratingComponentProximity) {
-              usernamesFound += 1;
+              usernamesFound++;
               ratingComponent += 10 * (jsonCandidate.rating + 1);
-              console.log(ratingComponent + " - Rating Component Score for this song combo");
             }
           } catch (err) {
             console.error(err);
           }
         }
         if (usernamesFound === 0) {
-          if(ratingEmptyAverage) {
-            console.log("setting ratingComponent to 50");
-            ratingComponent = 50;
-          } else {
-            console.log("setting ratingComponent to 0");
-            ratingComponent = 0;
-          }
+          ratingComponent = ratingEmptyAverage ? 50 : 0;
         } else {
           ratingComponent = ratingComponent / usernamesFound;
         }
-        console.log("total score calcs");
-        let totalScore = 0;
-        if (flatRatingWeight) {
-          console.log("Flat Rate");
-          totalScore = (((similarityWeight/100) * similarity) + ((rComopnentWeight/100) * ratingComponent));
-        }
-        else {
-          totalScore = (bases[x].rating + 1) * (((similarityWeight/100) * similarity) + ((rComopnentWeight/100) * ratingComponent))
-        }
-        console.log(totalScore + candidates[y].song + candidates[y].artist);
-        updateCandidates(candidatePoints, {
-          song: candidates[y].song,
-          artist: candidates[y].artist,
-          points: totalScore
-        });
-        console.log("song updated");
+        let totalScore = flatRatingWeight
+          ? ((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent)
+          : (bases[x].rating + 1) * (((similarityWeight / 100) * similarity) + ((rComponentWeight / 100) * ratingComponent));
+        updateCandidates(candidatePoints, { song: candidates[y].song, artist: candidates[y].artist, points: totalScore });
       }
-      console.log("NEXT BASE");
     }
-    console.log("end suggestion reached");
     const top = findTop(candidatePoints);
     setBestSong(top);
   }
 
-  // Main suggestion flow
   const getTopSuggestion = async () => {
     let userRatings = [];
     let suggestionBases = [];
-
     try {
       const res = await fetch(`${BASE_URL}/rating/userlist`, {
         method: "POST",
@@ -177,16 +137,11 @@ export default function Logout() {
     } catch (err) {
       console.error(err);
     }
-
     userRatings.forEach(r => {
-      if (
-        containsObject(r.rating, selectedRatings) &&
-        !containsSong(r.song, r.artist, suggestionBases)
-      ) {
+      if (containsObject(r.rating, selectedRatings) && !containsSong(r.song, r.artist, suggestionBases)) {
         suggestionBases.push({ song: r.song, artist: r.artist, rating: r.rating });
       }
     });
-
     let nonUserRatings = [];
     try {
       const res = await fetch(`${BASE_URL}/rating/nonUserList`, {
@@ -199,15 +154,12 @@ export default function Logout() {
     } catch (err) {
       console.error(err);
     }
-
     const candidates = [];
     nonUserRatings.forEach(r => {
       if (!containsSong(r.song, r.artist, candidates) && !containsSong(r.song, r.artist, suggestionBases)) {
         candidates.push({ song: r.song, artist: r.artist, rating: r.rating });
       }
     });
-    console.log(suggestionBases);
-    console.log(candidates);
     await generateSuggestion(suggestionBases, candidates);
   };
 
@@ -216,14 +168,12 @@ export default function Logout() {
     updated[index].checked = !updated[index].checked;
     updated[index].label = updated[index].checked ? "included" : "excluded";
     setButtons(updated);
-
     const ratingVal = index;
     setSelectedRatings(prev =>
-      updated[index].checked
-        ? [...prev, ratingVal]
-        : prev.filter(v => v !== ratingVal)
+      updated[index].checked ? [...prev, ratingVal] : prev.filter(v => v !== ratingVal)
     );
   };
+
   useEffect(() => {
     if (user?.username) setUsername(user.username);
   }, [user]);
@@ -231,74 +181,63 @@ export default function Logout() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Logged in as <Text style={styles.username}>{username}</Text></Text>
-
+        <Text style={styles.header}>
+          Logged in as <Text style={styles.username}>{username}</Text>
+        </Text>
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Suggested Song</Text>
-          <Text style={styles.suggestionText}>
-            {bestSong ? `${bestSong.song} by ${bestSong.artist}` : "No suggestion yet"}
-          </Text>
+          <Text style={styles.suggestionText}>{bestSong ? `${bestSong.song} by ${bestSong.artist}` : "No suggestion yet"}</Text>
         </View>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lyric Similarity</Text>
           <Text style={styles.sectionSub}>How much should lyrical similarity be weighted (0-99)?</Text>
           <TextInput
-            placeholder = "Similarity (0-99)"
-            defaultValue="99"
-            value = {similarityWeight}
-            onChangeText={setSimilarityWeight}
+            style={styles.input}
+            placeholder="Similarity (0-99)"
+            value={String(similarityWeight)}
+            onChangeText={text => setSimilarityWeight(Number(text))}
             keyboardType="numeric"
             maxLength={2}
           />
           <Text style={styles.sectionTitle}>Other User's Ratings</Text>
-          <Text style={styles.sectionsub}>First user:</Text>
           <TextInput
-            placeholder="First username"
-            defaultValue="first user"
-            value = {firstChoiceUser}
+            style={styles.input}
+            placeholder="First user"
+            value={firstChoiceUser}
             onChangeText={setFirstChoiceUser}
           />
-          <Text style={styles.sectionSub}>Second user:</Text>
           <TextInput
-            placeholder="Second username"
-            defaultValue="second user"
-            value = {secondChoiceUser}
+            style={styles.input}
+            placeholder="Second user"
+            value={secondChoiceUser}
             onChangeText={setSecondChoiceUser}
           />
-          <Text style={styles.sectionSub}>Third user:</Text>
           <TextInput
-            placeholder="Third username"
-            defaultValue="third user"
-            value = {thirdChoiceUser}
+            style={styles.input}
+            placeholder="Third user"
+            value={thirdChoiceUser}
             onChangeText={setThirdChoiceUser}
           />
           <Text style={styles.sectionsSub}>Base suggestion off of proximity of ratings or how high the songs are rated?</Text>
-
-          <TouchableOpacity style={styles.logoutButton} onPress={() => setRatingComponentProximity(true)}>
-            <Text style={styles.suggestText}>Proximity</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.suggestButton} onPress={() => setRatingComponentProximity(false)}>
-            <Text style={styles.suggestText}>High rating</Text>
-          </TouchableOpacity>
-          
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>High rating</Text>
+            <Switch value={ratingComponentProximity} onValueChange={setRatingComponentProximity} />
+            <Text style={styles.toggleLabel}>Proximity</Text>
+          </View>
           <Text style={styles.sectionsSub}>If no ratings are found, weight the component as negative or as average?</Text>
-          <TouchableOpacity style={styles.logoutButton} onPress={() => setRatingEmptyAverage(false)}>
-            <Text style={styles.suggestText}>Negative</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.suggestButton} onPress={() => setRatingEmptyAverage(true)}>
-            <Text style={styles.suggestText}>Average</Text>
-          </TouchableOpacity>
-          <Text style={styles.sectionSub}>How much should ratings be weighted (0-99)?</Text>
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Negative</Text>
+            <Switch value={ratingEmptyAverage} onValueChange={setRatingEmptyAverage} />
+            <Text style={styles.toggleLabel}>Average</Text>
+          </View>
           <TextInput
-            placeholder = "Rating (0-99)"
-            defaultValue="99"
-            value = {rComopnentWeight}
-            onChangeText={setRComponentRate}
+            style={styles.input}
+            placeholder="Rating weight (0-99)"
+            value={String(rComponentWeight)}
+            onChangeText={text => setRComponentRate(Number(text))}
             keyboardType="numeric"
             maxLength={2}
           />
@@ -323,16 +262,12 @@ export default function Logout() {
               </TouchableOpacity>
             ))}
           </View>
-
           <Text style={styles.sectionsSub}>Weight each rating equally?</Text>
-
-          <TouchableOpacity style={styles.logoutButton} onPress={() => setFlatRatingWeight(true)}>
-          <Text style={styles.logoutText}>Yes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.suggestButton} onPress={() => setFlatRatingWeight(false)}>
-          <Text style={styles.logoutText}>No</Text>
-          </TouchableOpacity>
-
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>No</Text>
+            <Switch value={flatRatingWeight} onValueChange={setFlatRatingWeight} />
+            <Text style={styles.toggleLabel}>Yes</Text>
+          </View>
           <TouchableOpacity style={styles.suggestButton} onPress={getTopSuggestion}>
             <Text style={styles.suggestText}>Suggest New Song</Text>
           </TouchableOpacity>
@@ -348,27 +283,54 @@ const styles = StyleSheet.create({
   header: { fontSize: 18, color: '#333', marginBottom: 8 },
   username: { fontWeight: 'bold' },
   logoutButton: {
-    backgroundColor: '#e74c3c', paddingVertical: 12,
-    paddingHorizontal: 24, borderRadius: 24,
+    backgroundColor: '#e74c3c',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
     marginBottom: 24
   },
   logoutText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   section: { width: '100%', marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
   sectionSub: { fontSize: 16, color: '#555', marginBottom: 12 },
+  sectionsSub: { fontSize: 16, color: '#555', marginBottom: 12 },
   suggestionText: { fontSize: 16, color: '#555' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 8,
+    width: '100%',
+    marginBottom: 12
+  },
   buttonsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   ratingButton: {
-    borderWidth: 1, borderColor: '#aaa',
-    borderRadius: 20, padding: 8, margin: 4,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 20,
+    padding: 8,
+    margin: 4,
     backgroundColor: '#fff'
   },
   ratingButtonActive: { backgroundColor: '#3498db', borderColor: '#3498db' },
   ratingText: { fontSize: 14, color: '#333' },
   ratingTextActive: { color: '#fff' },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12
+  },
+  toggleLabel: {
+    fontSize: 16,
+    color: '#555',
+    marginHorizontal: 8
+  },
   suggestButton: {
-    backgroundColor: '#3498db', paddingVertical: 12,
-    paddingHorizontal: 24, borderRadius: 24,
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
     alignSelf: 'center'
   },
   suggestText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
