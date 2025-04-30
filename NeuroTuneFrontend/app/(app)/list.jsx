@@ -8,68 +8,113 @@ import {
   Button,
 } from "react-native";
 import BASE_URL from "../../constants/api";
+import { useAuth } from "../../context/AuthContext";
 
 const EMOTIONS = ["sad", "happy", "excited", "fear", "anger", "nostalgia"];
+const EMOJI_MAP = {
+  sad: "😢",
+  happy: "😊",
+  excited: "😃",
+  fear: "😱",
+  anger: "😡",
+  nostalgia: "🥹",
+};
 
 export default function ListScreen() {
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Fetch all ratings (and ratios)
+  // track which emotion the current user picked per rating
+  const [selectedEmotions, setSelectedEmotions] = useState({});
+
+  // Fetch all ratings
   const fetchRatings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/rating/list`, {
+      const resp = await fetch(`${BASE_URL}/rating/list`, {
         credentials: "include",
       });
-      const data = await response.json();
+      const data = await resp.json();
       const arr = Array.isArray(data) ? data : data.ratings;
       setRatings(arr || []);
-    } catch (error) {
-      console.error("Error fetching ratings:", error);
+    } catch (err) {
+      console.error("Error fetching ratings:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Stubbed—just logs the button press for now
-  const handleEmotionPress = (ratingId, emotion) => {
-    console.log(`Emotion "${emotion}" clicked on rating #${ratingId}`);
-    // TODO: hook up to your backend when ready
+  // Send emotion & mark it as selected
+  const handleEmotionPress = async (song, artist, emotion) => {
+    const flags = EMOTIONS.reduce(
+      (acc, emo) => ({ ...acc, [emo]: emo === emotion }),
+      {}
+    );
+    try {
+      await fetch(`${BASE_URL}/data/addEmotion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user: user.username,
+          song,
+          artist,
+          ...flags,
+        }),
+      });
+      const key = `${song}__${artist}`;
+      setSelectedEmotions((prev) => ({ ...prev, [key]: emotion }));
+    } catch (err) {
+      console.error("Error uploading emotion:", err);
+    }
   };
 
   useEffect(() => {
     fetchRatings();
   }, []);
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.user}>👤 {item.username}</Text>
-      <Text style={styles.song}>🎵 {item.song}</Text>
-      <Text style={styles.artist}>🎤 {item.artist}</Text>
-      <Text style={styles.rating}>⭐ {item.rating}/9</Text>
+  const renderItem = ({ item }) => {
+    const key = `${item.song}__${item.artist}`;
+    const chosen = selectedEmotions[key];
 
-      <View style={styles.emotionsContainer}>
-        {EMOTIONS.map((emo) => (
-          <View key={emo} style={styles.emotionButton}>
-            <Button
-              title={emo}
-              onPress={() => handleEmotionPress(item.id, emo)}
-            />
-          </View>
-        ))}
-      </View>
+    return (
+      <View style={styles.card}>
+        <Text style={styles.user}>👤 {item.username}</Text>
+        <Text style={styles.song}>🎵 {item.song}</Text>
+        <Text style={styles.artist}>🎤 {item.artist}</Text>
+        <Text style={styles.rating}>⭐ {item.rating}/9</Text>
 
-      <View style={styles.ratiosContainer}>
-        <Text>😊 {item.happy_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😢 {item.sad_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😃 {item.excited_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😱 {item.fear_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>😡 {item.anger_ratio?.toFixed(2) ?? "0.00"}</Text>
-        <Text>🥲 {item.nostalgia_ratio?.toFixed(2) ?? "0.00"}</Text>
+        {/* emotion buttons */}
+        <View style={styles.emotionsContainer}>
+          {EMOTIONS.map((emo) => (
+            <View key={emo} style={styles.emotionButton}>
+              <Button
+                title={emo}
+                onPress={() =>
+                  handleEmotionPress(item.song, item.artist, emo)
+                }
+              />
+            </View>
+          ))}
+        </View>
+
+        {/* highlight row of emojis in matching order */}
+        <View style={styles.emojisRow}>
+          {EMOTIONS.map((emo) => (
+            <Text
+              key={emo}
+              style={[
+                styles.emoji,
+                chosen === emo && styles.selectedEmoji,
+              ]}
+            >
+              {EMOJI_MAP[emo]}
+            </Text>
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -129,6 +174,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: "#555",
   },
+
   emotionsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -138,9 +184,17 @@ const styles = StyleSheet.create({
     marginRight: 5,
     marginBottom: 5,
   },
-  ratiosContainer: {
+
+  emojisRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+  },
+  emoji: {
+    fontSize: 24,
+    opacity: 0.3,
+  },
+  selectedEmoji: {
+    opacity: 1,
   },
 });
