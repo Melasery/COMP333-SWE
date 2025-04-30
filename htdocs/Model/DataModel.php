@@ -80,6 +80,60 @@ class DataModel extends Database
         );
     }
 
+    public function getEmotion($username, $song, $artist)
+    {
+        return $this-> select(
+            "SELECT * FROM emotions WHERE user = ? AND song = ? AND artist = ?",
+            [['type' => 's', 'value' => $username], ['type' => 's', 'value' => $song], ['type' =>'s', 'value' => $artist]]
+        );
+    }
+
+    public function emotionTally($song, $artist)
+    {
+        return $this-> select(
+            "SELECT * FROM emotions WHERE song = ? AND artist = ?",
+            [['type' => 's', 'value' => $song], ['type' =>'s', 'value' => $artist]]
+        );
+    }
+
+    public function updateEmotion($username, $song, $artist, $sad, $happy, $excited, $fear, $anger, $nostalgia)
+    {
+        $this->executeStatement(
+            "UPDATE emotions SET sad = ?, happy = ?, excited = ?, fear = ?, anger = ?, nostalgia = ? WHERE user = ? AND song = ? AND artist = ?",
+            [
+                ['type' => 'i', 'value' => +$sad],
+                ['type' => 'i', 'value' => +$happy],
+                ['type' => 'i', 'value' => +$excited],
+                ['type' => 'i', 'value' => +$fear],
+                ['type' => 'i', 'value' => +$anger],
+                ['type' => 'i', 'value' => +$nostalgia],
+                ['type' => 's', 'value' => $username],
+                ['type' => 's', 'value' => $song],
+                ['type' => 's', 'value' => $artist],
+            ]
+        );
+        return $this->connection->affected_rows;
+    }
+
+    public function createEmotion($username, $song, $artist, $sad, $happy, $excited, $fear, $anger, $nostalgia)
+    {
+        $this->executeStatement(
+            "INSERT INTO emotions (user, song, artist, sad, happy, excited, fear, anger, nostalgia) VALUES (?,?,?,?,?,?,?,?,?)",
+            [
+                ['type' => 's', 'value' => $username],
+                ['type' => 's', 'value' => $song],
+                ['type' => 's', 'value' => $artist],
+                ['type' => 'i', 'value' => +$sad],
+                ['type' => 'i', 'value' => +$happy],
+                ['type' => 'i', 'value' => +$excited],
+                ['type' => 'i', 'value' => +$fear],
+                ['type' => 'i', 'value' => +$anger],
+                ['type' => 'i', 'value' => +$nostalgia]
+            ]
+        );
+        return $this-> connection->insert_id;
+    }
+
     public function updatePoints($username, $song, $artist, $points)
     {
         $this->executeStatement(
